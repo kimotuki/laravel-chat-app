@@ -20,8 +20,14 @@ $app = Application::configure(basePath: dirname(__DIR__))
         );
     })->create();
 
-// 環境変数ファイルはホームディレクトリ直下の .env.laravel-chat-app を参照する
-$app->useEnvironmentPath(getenv('HOME'));
-$app->loadEnvironmentFrom('.env.laravel-chat-app');
+// 環境変数ファイルの参照先（優先順）:
+// 1. APP_ENV_PATH で指定されたディレクトリ
+// 2. $HOME（直下に .env.laravel-chat-app が存在する場合のみ）
+// 3. どちらも該当しなければ Laravel 標準（プロジェクト直下の .env）
+$envPath = getenv('APP_ENV_PATH') ?: getenv('HOME');
+if (is_string($envPath) && $envPath !== '' && is_file($envPath.'/.env.laravel-chat-app')) {
+    $app->useEnvironmentPath($envPath);
+    $app->loadEnvironmentFrom('.env.laravel-chat-app');
+}
 
 return $app;

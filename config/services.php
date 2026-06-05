@@ -35,4 +35,8 @@ return [
         ],
     ],
 
+    'prism' => [
+        'model' => env('PRISM_MODEL', 'claude-3-5-haiku-latest'),
+    ],
+
 ];

@@ -19,6 +19,9 @@
     </source>
     <php>
         <env name="APP_ENV" value="testing"/>
+        <!-- テスト専用キー: 個人の .env.laravel-chat-app の値を上書きし、実APIキーでのテスト実行を防ぐ -->
+        <env name="APP_KEY" value="base64:DQVOb2552OxMqbZv1xFuTKlPbEicWMQ7Ei89YCvJACA="/>
+        <env name="ANTHROPIC_API_KEY" value="sk-ant-dummy-for-testing"/>
         <env name="APP_MAINTENANCE_DRIVER" value="file"/>
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="BROADCAST_CONNECTION" value="null"/>

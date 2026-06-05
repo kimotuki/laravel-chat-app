@@ -24,17 +24,22 @@ class ChatController extends Controller
      */
     public function send(Request $request): JsonResponse
     {
-        $validated = $request->validate([
+        $request->validate([
             'message' => ['required', 'string', 'max:4000'],
         ]);
 
-        $model = (string) config('services.prism.model', env('PRISM_MODEL', 'claude-3-5-haiku-latest'));
+        $message = $request->string('message')->toString();
+
+        $model = config('services.prism.model');
+        if (! is_string($model) || $model === '') {
+            $model = 'claude-3-5-haiku-latest';
+        }
 
         try {
             $response = Prism::text()
                 ->using(Provider::Anthropic, $model)
                 ->withSystemPrompt('あなたは親切で丁寧な日本語のアシスタントです。簡潔に回答してください。')
-                ->withPrompt($validated['message'])
+                ->withPrompt($message)
                 ->asText();
 
             return response()->json([

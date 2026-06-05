@@ -7,6 +7,30 @@
 <a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
 </p>
 
+## 環境変数ファイルの参照先について
+
+このプロジェクトは、APIキーなどの秘密情報をリポジトリ外に置くため、環境変数ファイル（`.env`）を**プロジェクト直下ではなく外部ディレクトリ**から読み込むようカスタマイズしています（`bootstrap/app.php` 参照）。
+
+参照先は以下の優先順で決まります:
+
+1. **`APP_ENV_PATH` 環境変数で指定されたディレクトリ**
+   ```bash
+   # 例: 任意のディレクトリに置いた env ファイルを使う
+   APP_ENV_PATH=/path/to/secrets php artisan serve
+   ```
+2. **ホームディレクトリ（`$HOME`）** — 直下に `.env.laravel-chat-app` が存在する場合のみ
+   ```bash
+   # 例: 初回セットアップ
+   cp .env.example ~/.env.laravel-chat-app
+   # ~/.env.laravel-chat-app に ANTHROPIC_API_KEY 等を設定し、権限を絞る
+   chmod 600 ~/.env.laravel-chat-app
+   ```
+3. **どちらも該当しない場合** — Laravel 標準どおりプロジェクト直下の `.env` を読み込みます
+
+ファイル名はいずれの場合も `.env.laravel-chat-app` です（3の標準フォールバック時のみ `.env`）。
+
+> **Note:** Docker・CI など `HOME` が設定されていない環境でも起動可能です。その場合は `APP_ENV_PATH` で参照先を明示するか、プロジェクト直下に `.env` を配置してください。なお、テスト実行時（phpunit）は `phpunit.xml` で `APP_KEY` と `ANTHROPIC_API_KEY` をダミー値に上書きするため、個人の実APIキーが使われることはありません。
+
 ## About Laravel
 
 Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
