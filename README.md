@@ -1,82 +1,112 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Laravel Chat App（ハンズオン用）
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+**Laravel** と [Prism](https://prismphp.com/) を使って、Anthropic Claude と対話できるシンプルなチャットアプリです。
+
+> **Note:** 本リポジトリは **ハンズオン用のテストアプリ** です。学習・検証目的で作成しており、本番運用は想定していません。
+
+## 機能
+
+- ブラウザ上のチャット画面から Claude にメッセージを送信し、返信を表示
+- Prism 経由で Anthropic API（`claude-haiku-4-5`）を呼び出し
+- レート制限（1分あたり10リクエスト）による API キー保護
+- エラー詳細はログにのみ記録し、画面には固定メッセージを表示
+
+## 技術スタック
+
+| 項目 | 内容 |
+|------|------|
+| フレームワーク | Laravel ^13.8 |
+| 言語 | PHP ^8.3 |
+| LLM 連携 | prism-php/prism ^0.100 + Anthropic Claude |
+| データベース | SQLite |
+| 静的解析 | PHPStan / Larastan（レベル10） |
+
+## セットアップ
+
+### 1. 依存パッケージのインストール
+
+```bash
+composer install
+```
+
+### 2. 環境変数ファイルの作成
+
+このプロジェクトは、API キーなどの秘密情報をリポジトリ外へ置くため、環境変数ファイルを **ホームディレクトリ直下の `.env.laravel-chat-app`** から読み込みます（詳細は後述）。
+
+```bash
+cp .env.example ~/.env.laravel-chat-app
+chmod 600 ~/.env.laravel-chat-app
+```
+
+`~/.env.laravel-chat-app` に最低限以下を設定してください:
+
+```dotenv
+ANTHROPIC_API_KEY=（Anthropic Console で発行した API キー）
+PRISM_MODEL=claude-haiku-4-5-20251001
+APP_KEY=（php artisan key:generate で生成）
+```
+
+### 3. データベースの準備
+
+```bash
+touch database/database.sqlite
+php artisan migrate
+```
+
+### 4. 起動
+
+```bash
+php artisan serve
+```
+
+ブラウザで http://127.0.0.1:8000/chat を開くとチャット画面が表示されます。
 
 ## 環境変数ファイルの参照先について
 
-このプロジェクトは、APIキーなどの秘密情報をリポジトリ外に置くため、環境変数ファイル（`.env`）を**プロジェクト直下ではなく外部ディレクトリ**から読み込むようカスタマイズしています（`bootstrap/app.php` 参照）。
-
-参照先は以下の優先順で決まります:
+環境変数ファイルの参照先は `bootstrap/app.php` でカスタマイズしており、以下の優先順で決まります:
 
 1. **`APP_ENV_PATH` 環境変数で指定されたディレクトリ**
    ```bash
-   # 例: 任意のディレクトリに置いた env ファイルを使う
    APP_ENV_PATH=/path/to/secrets php artisan serve
    ```
 2. **ホームディレクトリ（`$HOME`）** — 直下に `.env.laravel-chat-app` が存在する場合のみ
-   ```bash
-   # 例: 初回セットアップ
-   cp .env.example ~/.env.laravel-chat-app
-   # ~/.env.laravel-chat-app に ANTHROPIC_API_KEY 等を設定し、権限を絞る
-   chmod 600 ~/.env.laravel-chat-app
-   ```
-3. **どちらも該当しない場合** — Laravel 標準どおりプロジェクト直下の `.env` を読み込みます
+3. **どちらも該当しない場合** — Laravel 標準どおりプロジェクト直下の `.env`
 
-ファイル名はいずれの場合も `.env.laravel-chat-app` です（3の標準フォールバック時のみ `.env`）。
+ファイル名は 1・2 の場合 `.env.laravel-chat-app`、3 の場合は `.env` です。
 
-> **Note:** Docker・CI など `HOME` が設定されていない環境でも起動可能です。その場合は `APP_ENV_PATH` で参照先を明示するか、プロジェクト直下に `.env` を配置してください。なお、テスト実行時（phpunit）は `phpunit.xml` で `APP_KEY` と `ANTHROPIC_API_KEY` をダミー値に上書きするため、個人の実APIキーが使われることはありません。
+> **Note:** Docker・CI など `HOME` が設定されていない環境でも起動できます。その場合は `APP_ENV_PATH` で参照先を明示するか、プロジェクト直下に `.env` を配置してください。
 
-## About Laravel
-
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
-
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
-
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
-
-## Learning Laravel
-
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
-
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
-
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
-
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## テスト・静的解析
 
 ```bash
-composer require laravel/boost --dev
+# テスト（個人の API キーは使われません — phpunit.xml でダミー値に上書き）
+php artisan test
 
-php artisan boost:install
+# 静的解析（PHPStan レベル10）
+vendor/bin/phpstan analyse --memory-limit=1G
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+## ディレクトリ構成（主要ファイル）
 
-## Contributing
+```
+app/Http/Controllers/ChatController.php  # チャット画面表示 + LLM 呼び出し
+routes/web.php                           # ルート定義（/chat、レート制限付き）
+resources/views/chat.blade.php           # チャット UI
+config/services.php                      # Prism モデル設定（PRISM_MODEL）
+bootstrap/app.php                        # 環境変数ファイル参照先のカスタマイズ
+phpstan.neon                             # 静的解析設定
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## セキュリティ上の配慮
 
-## Code of Conduct
+ハンズオン題材として、以下の対策を実装しています:
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+- API キーをリポジトリ外（`~/.env.laravel-chat-app`、権限 600）で管理
+- `/chat` への POST にレート制限（`throttle:10,1`）
+- 例外メッセージを画面に出さず、詳細はログ（`storage/logs/laravel.log`）のみに記録
+- LLM 応答の描画に `textContent` を使用（XSS 対策）
+- テスト実行時は実 API キーを使わないよう `phpunit.xml` でダミー値に上書き
 
-## Security Vulnerabilities
+## ライセンス
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+MIT License
